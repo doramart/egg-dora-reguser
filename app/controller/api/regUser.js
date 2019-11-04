@@ -10,7 +10,17 @@ const {
 } = require('../../utils');
 
 let RegUserController = {
-
+    getCacheValueByKey(key) {
+        return new Promise((resolve, reject) => {
+            cache.get(key, (targetValue) => {
+                if (targetValue) {
+                    resolve(targetValue)
+                } else {
+                    resolve('');
+                }
+            })
+        })
+    },
     checkUserFormData(ctx, fields) {
         let errMsg = '';
         // console.log('----')
@@ -412,7 +422,7 @@ let RegUserController = {
 
             let endStr = bindType == '2' ? fields.email : (fields.countryCode + fields.phoneNum);
 
-            let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_tourist_bindAccount_' + endStr);
+            let currentCode = await this.getCacheValueByKey(app.config.session_secret + '_sendMessage_tourist_bindAccount_' + endStr);
 
             if (!fields.messageCode || !validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                 errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
@@ -484,7 +494,7 @@ let RegUserController = {
                     }
                 } else if (loginType == '1') {
 
-                    let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_login_' + (fields.countryCode + fields.phoneNum));
+                    let currentCode = await this.getCacheValueByKey(app.config.session_secret + '_sendMessage_login_' + (fields.countryCode + fields.phoneNum));
                     if (!fields.messageCode || !validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                         errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
                     }
@@ -501,7 +511,7 @@ let RegUserController = {
                 if (!validatorUtil.checkEmail(fields.email)) {
                     errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_email")]);
                 }
-                let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_login_' + fields.email);
+                let currentCode = await this.getCacheValueByKey(app.config.session_secret + '_sendMessage_login_' + fields.email);
                 if (!fields.messageCode || !validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                     errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
                 }
@@ -779,7 +789,7 @@ let RegUserController = {
             }
 
             let endStr = regType == '1' ? (fields.countryCode + fields.phoneNum) : fields.email;
-            let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_reg_' + endStr);
+            let currentCode = await this.getCacheValueByKey(app.config.session_secret + '_sendMessage_reg_' + endStr);
 
             if (!validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                 errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
@@ -1137,7 +1147,7 @@ let RegUserController = {
             }
 
             let endStr = type == '1' ? (fields.countryCode + fields.phoneNum) : fields.email;
-            let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_resetPassword_' + endStr);
+            let currentCode = await this.getCacheValueByKey(app.config.session_secret + '_sendMessage_resetPassword_' + endStr);
 
             if (!validator.isNumeric((messageCode).toString()) || (messageCode).length != 6 || currentCode != fields.messageCode) {
                 errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
