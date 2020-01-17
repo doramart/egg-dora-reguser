@@ -8,12 +8,12 @@ const regUserRule = (ctx) => {
             required: true,
             min: 2,
             max: 30,
-            message: cxt.__("validate_error_field", [cxt.__("label_user_userName")])
+            message: ctx.__("validate_error_field", [ctx.__("label_user_userName")])
         },
         email: {
             type: "email",
             required: true,
-            message: cxt.__("validate_inputCorrect", [cxt.__("label_user_email")])
+            message: ctx.__("validate_inputCorrect", [ctx.__("label_user_email")])
         },
         phoneNum: {
             type: "string",
@@ -80,7 +80,7 @@ let RegUserController = {
 
             let fields = ctx.request.body || {};
 
-            ctx.validate(userRule.form(ctx), {
+            ctx.validate(regUserRule(ctx), {
                 userName: fields.userName,
                 email: fields.email,
                 phoneNum: fields.phoneNum,
