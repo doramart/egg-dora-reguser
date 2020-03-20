@@ -3,8 +3,8 @@ const xss = require("xss");
 const shortid = require('shortid');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
+
 const {
-    cache,
     siteFunc,
     validatorUtil
 } = require('../../utils');
@@ -13,7 +13,6 @@ let RegUserController = {
 
     checkUserFormData(ctx, fields) {
         let errMsg = '';
-        // console.log('----')
         if (fields._id && !checkCurrentId(fields._id)) {
             errMsg = ctx.__("validate_error_params");
         }
@@ -129,6 +128,37 @@ let RegUserController = {
 
     },
 
+
+    /**
+     * @api {post} /api/user/updateInfo 修改用户信息
+     * @apiDescription 修改用户信息，需要登录态
+     * @apiName /user/updateInfo
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} profession 职业
+     * @apiParam {string} industry 行业
+     * @apiParam {string} experience 教育经历
+     * @apiParam {string} logo 头像
+     * @apiParam {string} gender 性别 0男 1女
+     * @apiParam {string} name 姓名
+     * @apiParam {string} userName 昵称
+     * @apiParam {string} phoneNum 手机号
+     * @apiParam {string} introduction 一句话介绍
+     * @apiParam {string} comments 个人简介
+     * @apiParam {string} province 所在省份
+     * @apiParam {string} city 所在城市
+     * @apiParam {string} birth 出生年月日 2018-09-21
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *    "status": 200,
+     *    "message": "操作成功！",
+     *    "server_time": 1543372263586,
+     *    "data": {}
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/updateInfo
+     * @apiVersion 1.0.0
+     */
     async updateUser(ctx, app) {
 
 
@@ -203,14 +233,17 @@ let RegUserController = {
                 userObj.experience = xss(fields.experience);
             }
             if (fields.password) {
-                userObj.password = ctx.helper.encrypt(fields.password, app.config.encrypt_key);
+                userObj.password = fields.password;
             }
 
             let targetUserId = ctx.session.user._id;
 
             await ctx.service.user.update(ctx, targetUserId, userObj);
 
-            ctx.helper.renderSuccess(ctx);
+            ctx.helper.renderSuccess(ctx, {
+                data: {},
+                message: ctx.__("sys_layer_option_success")
+            });
 
         } catch (err) {
 
@@ -224,7 +257,83 @@ let RegUserController = {
     },
 
 
-    // 我关注的专题、作者等信息
+    /**
+     * @api {get} /api/user/getMyFollowInfos 我的关注
+     * @apiDescription 我的关注，获取我关注的创作者，专题，已经关注创作者的帖子等相关信息，目前不带分页
+     * @apiName /user/getMyFollowInfos
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *  "status": 200,
+     *  "message": "getMyFollowInfos",
+     *  "server_time": 1542900168427,
+     *  "data": {
+     *   "watchersList": [ // 我关注的创作者
+     *      {
+     *       "_id": "yNYHEw3-e",
+     *       "userName": "yoooyu",
+     *       "name": "创作者兄",
+     *       "date": "2018-11-22 23:22:48",
+     *       "id": "yNYHEw3-e"
+     *      }
+     *    ],
+     *   "watchSpecialList": [ // 我关注的专题
+     *      {
+     *       "_id": "eF0Djunws",
+     *       "name": "人工智能",
+     *       "comments": "关注人工智能，人人都有机会",
+     *       "sImg": "/upload/images/img20181117213151.png",
+     *       "date": "2018-11-22 23:22:48",
+     *       "id": "eF0Djunws"
+     *      }
+     *    ],
+     *   "watchCreatorContents": [ // 我关注的相关内容
+     *      {
+     *       "_id": "Y1XFYKL52",
+     *       "title": "如何优化vue的内存占用？",
+     *       "stitle": "如何优化vue的内存占用？",
+     *       "sortPath": "",
+     *       "keywords": "",
+     *       "uAuthor": "yNYHEw3-e",
+     *       "discription": "在使用了一段时间的vue.js开发移动端h5页面（电商类页面，会有一些数据量较大但一次渲染就可以的商品列表）后",
+     *       "comments": "<p><span>在使用了一段时间的vue.js开发移动端h5页面（电商类页面，会有一些数据量较大但一次渲染就可以的商品列表）后，感觉相比于传统的jquery（zepto）和前端模板引擎的组合能有效的提升开发效率和代码维护性，但是也存在一些问题，比如说内存占用问题，用vue.js开发的页面内存占用相比于传统方式会更多，而且传统的开发方式页面渲染完后，还能对不需要的js对象进行垃圾回收，但vue.js里面的一些指令对象、watcher对象、data数据等似乎目前都没有找到比较好的垃圾回收的方式。</span><br /><br /><span>想问下对于那些只用渲染一次的页面部分（比如数据量较大的列表页）有没有比较合适的内存优化方案（比如释放指令对象、watcher对象、data对象）？</span><br /><br /><span>举个例子：</span><br /><br /><span>比如其中的lazy指令，以及对于items这个基本上只用渲染一次的data等有没有可以优化内存占用的方法</span></p>",
+     *       "twiterAuthor": "",
+     *       "translate": "",
+     *       "bearish": [
+     *          
+     *        ],
+     *       "profitable": [
+     *          
+     *        ],
+     *       "isFlash": false,
+     *       "__v": 0,
+     *       "author": "",
+     *       "likeNum": 0,
+     *       "commentNum": 0,
+     *       "clickNum": 5,
+     *       "isTop": 1,
+     *       "state": true,
+     *       "updateDate": "2018-11-16",
+     *       "date": "2018-11-16 23:00:16",
+     *       "appShowType": "0",
+     *       "sImg": "/upload/images/img20181116225948.jpeg",
+     *       "tags": [
+     *       "Y3DTgmHK3"
+     *        ],
+     *       "categories": [
+     *          
+     *        ],
+     *       "type": "1",
+     *       "id": "Y1XFYKL52"
+     *      }
+     *    ]
+     *  }
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/getMyFollowInfos
+     * @apiVersion 1.0.0
+     */
     async getMyFollowInfos(ctx, app) {
 
         try {
@@ -281,6 +390,35 @@ let RegUserController = {
         }
     },
 
+
+    /**
+     * @api {get} /api/user/userInfo 获取登录用户基本信息
+     * @apiDescription 获取登录用户信基本信息,需要登录态
+     * @apiName userInfo
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *  {
+     *    data: {
+     *      userInfo: {
+     *        comments: ""
+     *        phoneNum: "15229908899"
+     *        countryCode: "86"
+     *        date: "2018-11-13 12:09:29"
+     *        email: "doramart@qq.com"
+     *        enable: true
+     *        group: "0"
+     *        id: "zwwdJvLmP"
+     *        logo: "/upload/images/defaultlogo.png"
+     *        msg_count: { }
+     *        userName: "doramart"
+     *     }
+     *     status: 200
+     *  }
+     * @apiSampleRequest http://localhost:8080/api/user/userInfo
+     * @apiVersion 1.0.0
+     */
     async getUserInfoBySession(ctx, app) {
 
         try {
@@ -336,6 +474,35 @@ let RegUserController = {
 
     },
 
+    /**
+     * @api {post} /api/user/bindInfo 游客绑定邮箱或手机号
+     * @apiDescription 游客绑定邮箱或手机号
+     * @apiName bindInfo
+     * @apiGroup User
+     * @apiParam {string} type 绑定类型（1:手机号  2:邮箱）
+     * @apiParam {string} phoneNum 手机号（eq:15220064294）
+     * @apiParam {string} countryCode 国家代码（eq: 86）
+     * @apiParam {string} messageCode 手机验证码/邮箱验证码(eq: 123456)
+     * @apiParam {string} email 注册邮箱
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *    "status": 200,
+     *    "message": "绑定成功",
+     *    "server_time": 1544246883076,
+     *    "data": {}
+     *}
+     * @apiError {json} result
+     * @apiErrorExample {json} Error-Response:
+     *  {
+     *    data: {}
+     *    message: "绑定失败"
+     *    server_time: 1542082677922
+     *    status: 500
+     *  }
+     * @apiSampleRequest http://localhost:8080/api/user/bindInfo
+     * @apiVersion 1.0.0
+     */
     async bindEmailOrPhoneNum(ctx, app) {
 
         try {
@@ -412,7 +579,7 @@ let RegUserController = {
 
             let endStr = bindType == '2' ? fields.email : (fields.countryCode + fields.phoneNum);
 
-            let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_tourist_bindAccount_' + endStr);
+            let currentCode = await app.cache.get(app.config.session_secret + '_sendMessage_tourist_bindAccount_' + endStr);
 
             if (!fields.messageCode || !validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                 errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
@@ -447,6 +614,46 @@ let RegUserController = {
 
 
 
+    /**
+     * @api {post} /api/user/doLogin 用户登录
+     * @apiDescription 用户登录
+     * @apiName doLogin
+     * @apiGroup User
+     * @apiParam {string} phoneNum 手机号（eq:15220064294）
+     * @apiParam {string} countryCode 国家代码（eq: 86）
+     * @apiParam {string} email 用户邮箱(xx@qq.com)
+     * @apiParam {string} loginType 登录类型 (1:手机验证码登录 2:手机号密码登录 3:邮箱密码登录,4:邮箱验证码登录)
+     * @apiParam {string} messageCode 手机验证码(eq: 123456)
+     * @apiParam {string} password 密码 // 非必填，与短信验证码选其一
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *  {
+     *    data: {
+     *      comments: ""
+     *      date: "2018-11-13 12:09:29"
+     *      email: "doramart@qq.com"
+     *      enable: true
+     *      group: "0"
+     *      id: "zwwdJvLmP"
+     *      logo: "/upload/images/defaultlogo.png"
+     *      userName: "doramart"
+     *      token: "eyJkYXRhIjp7InVzZXJJZCI6Inp3d2RKdkxtUCIsInBob25lTnVtIjoxNTIyMDA2NDI5NH0sImNyZWF0ZWQiOjE1NDI2NDMyNTAsImV4cCI6MzYwMH0=.SW3JVAjkQUX0mgrSBuOirB3kQV6NNatlc4j/qW7SxTM="
+     *    } 
+     *    message: "登录成功"
+     *    server_time: 1542089573405
+     *    status: 200
+     *  }  
+     * @apiError {json} result
+     * @apiErrorExample {json} Error-Response:
+     *  {
+     *    data: {}
+     *    message: "验证码错误"
+     *    server_time: 1542082677922
+     *    status: 500
+     *  }
+     * @apiSampleRequest http://localhost:8080/api/user/doLogin
+     * @apiVersion 1.0.0
+     */
     async loginAction(ctx, app) {
 
         try {
@@ -484,7 +691,7 @@ let RegUserController = {
                     }
                 } else if (loginType == '1') {
 
-                    let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_login_' + (fields.countryCode + fields.phoneNum));
+                    let currentCode = await app.cache.get(app.config.session_secret + '_sendMessage_login_' + (fields.countryCode + fields.phoneNum));
                     if (!fields.messageCode || !validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                         errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
                     }
@@ -501,7 +708,7 @@ let RegUserController = {
                 if (!validatorUtil.checkEmail(fields.email)) {
                     errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_email")]);
                 }
-                let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_login_' + fields.email);
+                let currentCode = await app.cache.get(app.config.session_secret + '_sendMessage_login_' + fields.email);
                 if (!fields.messageCode || !validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                     errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
                 }
@@ -535,14 +742,10 @@ let RegUserController = {
             if (loginType == '1') {
                 _.assign(userObj, queryUserObj)
             } else if (loginType == '2') {
-                _.assign(userObj, queryUserObj, {
-                    password: ctx.helper.encrypt(fields.password, app.config.encrypt_key)
-                })
+                _.assign(userObj, queryUserObj)
             } else if (loginType == '3') {
                 _.assign(userObj, {
                     email: fields.email
-                }, {
-                    password: ctx.helper.encrypt(fields.password, app.config.encrypt_key)
                 })
             } else if (loginType == '4') {
                 _.assign(userObj, {
@@ -568,6 +771,10 @@ let RegUserController = {
                     } else {
                         throw new Error(ctx.__('validate_login_notSuccess'));
                     }
+                } else {
+                    if (fields.password != ctx.helper.decrypt(user.password, app.config.encrypt_key)) {
+                        throw new Error(ctx.__('validate_login_notSuccess'));
+                    }
                 }
                 if (!user.enable) {
                     throw new Error(ctx.__("validate_user_forbiden"));
@@ -591,7 +798,7 @@ let RegUserController = {
                 // 将cookie存入缓存
                 ctx.cookies.set('api_' + app.config.auth_cookie_name, renderUser.token, {
                     path: '/',
-                    maxAge: 1000 * 60 * 60 * 24 * 30,
+                    maxAge: app.config.userMaxAge,
                     signed: true,
                     httpOnly: true
                 }); //cookie 有效期30天
@@ -640,7 +847,7 @@ let RegUserController = {
                 })
                 ctx.cookies.set('api_' + app.config.auth_cookie_name, renderUser.token, {
                     path: '/',
-                    maxAge: 1000 * 60 * 60 * 24 * 30,
+                    maxAge: app.config.userMaxAge,
                     signed: true,
                     httpOnly: true
                 });
@@ -661,6 +868,40 @@ let RegUserController = {
         }
     },
 
+    /**
+     * @api {post} /api/user/touristLogin 游客登录
+     * @apiDescription 游客登录
+     * @apiName touristLogin
+     * @apiGroup User
+     * @apiParam {string} userCode 客户端传递加签字符串
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *  {
+     *    data: {
+     *      comments: ""
+     *      date: "2018-11-13 12:09:29"
+     *      enable: true
+     *      group: "0"
+     *      id: "zwwdJvLmP"
+     *      logo: "/upload/images/defaultlogo.png"
+     *      userName: "doramart"
+     *      token: "eyJkYXRhIjp7InVzZXJJZCI6Inp3d2RKdkxtUCIsInBob25lTnVtIjoxNTIyMDA2NDI5NH0sImNyZWF0ZWQiOjE1NDI2NDMyNTAsImV4cCI6MzYwMH0=.SW3JVAjkQUX0mgrSBuOirB3kQV6NNatlc4j/qW7SxTM="
+     *    } 
+     *    message: "登录成功"
+     *    server_time: 1542089573405
+     *    status: 200
+     *  }  
+     * @apiError {json} result
+     * @apiErrorExample {json} Error-Response:
+     *  {
+     *    data: {}
+     *    message: "登录失败"
+     *    server_time: 1542082677922
+     *    status: 500
+     *  }
+     * @apiSampleRequest http://localhost:8080/api/user/touristLogin
+     * @apiVersion 1.0.0
+     */
     async touristLoginAction(ctx, app) {
 
         try {
@@ -672,7 +913,7 @@ let RegUserController = {
                 throw new Error(ctx.__('validate_error_params'));
             }
 
-            let renderCode = ctx.helper.decryptApp(app.config.encryptApp_key, app.config.encryptApp_vi, userCode);
+            let renderCode = ctx.helper.encrypt(userCode, app.config.encrypt_key);
 
             if (!renderCode) {
                 throw new Error(ctx.__('validate_error_params'));
@@ -751,6 +992,38 @@ let RegUserController = {
     },
 
 
+    /**
+     * @api {post} /api/user/doReg 用户注册
+     * @apiDescription 用户注册
+     * @apiName doReg
+     * @apiGroup User
+     * @apiParam {string} regType 注册类型（1:手机号注册  2:邮箱注册）
+     * @apiParam {string} phoneNum 手机号（eq:15220064294）
+     * @apiParam {string} countryCode 国家代码（eq: 86）
+     * @apiParam {string} messageCode 手机验证码/邮箱验证码(eq: 123456)
+     * @apiParam {string} email 注册邮箱
+     * @apiParam {string} password 密码
+     * @apiParam {string} logo 用户头像
+     * @apiParam {string} userName 用户名
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *    "status": 200,
+     *    "message": "注册成功",
+     *    "server_time": 1544246883076,
+     *    "data": {}
+     *}
+     * @apiError {json} result
+     * @apiErrorExample {json} Error-Response:
+     *  {
+     *    data: {}
+     *    message: "注册失败"
+     *    server_time: 1542082677922
+     *    status: 500
+     *  }
+     * @apiSampleRequest http://localhost:8080/api/user/doReg
+     * @apiVersion 1.0.0
+     */
     async regAction(ctx, app) {
 
         try {
@@ -779,7 +1052,7 @@ let RegUserController = {
             }
 
             let endStr = regType == '1' ? (fields.countryCode + fields.phoneNum) : fields.email;
-            let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_reg_' + endStr);
+            let currentCode = await app.cache.get(app.config.session_secret + '_sendMessage_reg_' + endStr);
 
             if (!validator.isNumeric((fields.messageCode).toString()) || (fields.messageCode).length != 6 || currentCode != fields.messageCode) {
                 errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
@@ -809,7 +1082,7 @@ let RegUserController = {
                 email: fields.email,
                 group: '0',
                 creativeRight: false,
-                password: ctx.helper.encrypt(fields.password, app.config.encrypt_key),
+                password: fields.password,
                 loginActive: false,
                 enable: true
             }
@@ -874,6 +1147,27 @@ let RegUserController = {
 
     },
 
+
+    /**
+     * @api {get} /api/user/checkPhoneNumExist 校验注册手机号是否存在
+     * @apiDescription 校验注册手机号是否存在
+     * @apiName /user/checkPhoneNumExist
+     * @apiGroup User
+     * @apiParam {string} countryCode 国家代码
+     * @apiParam {string} phoneNum 注册手机号
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *  "status": 200,
+     *  "message": "checkPhoneNumExist success",
+     *  "server_time": 1544245281332,
+     *  "data": {
+     *    "checkState": true  // true/存在  false/不存在
+     *  }
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/checkPhoneNumExist
+     * @apiVersion 1.0.0
+     */
     async checkPhoneNumExist(ctx, app) {
 
         try {
@@ -935,6 +1229,26 @@ let RegUserController = {
         }
     },
 
+
+    /**
+     * @api {get} /api/user/checkHadSetLoginPassword 校验用户是否已设置登录密码
+     * @apiDescription 校验用户是否已设置登录密码，需要登录态
+     * @apiName /user/checkHadSetLoginPassword
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *  "status": 200,
+     *  "message": "checkHadSetLoginPassword success",
+     *  "server_time": 1544245281332,
+     *  "data": {
+     *    "checkState": true  // true/已设置  false/未设置
+     *  }
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/checkHadSetLoginPassword
+     * @apiVersion 1.0.0
+     */
     async checkHadSetLoginPassword(ctx, app) {
 
         try {
@@ -975,7 +1289,6 @@ let RegUserController = {
 
     async sentConfirmEmail(ctx, app) {
 
-
         try {
 
             let fields = ctx.request.body || {};
@@ -998,19 +1311,19 @@ let RegUserController = {
                         retrieve_time: retrieveTime
                     });
                     //发送通知邮件给用户
-                    const systemConfigs = await ctx.service.systemConfig.find({
-                        isPaging: '0'
-                    });
-                    if (!_.isEmpty(systemConfigs)) {
-                        ctx.helper.sendEmail(systemConfigs[0], emailTypeKey.email_findPsd, {
+                    await ctx.helper.reqJsonData('mailTemplate/sendEmail', {
+                        tempkey: "0",
+                        info: {
                             email: targetEmail,
                             userName: user.userName,
                             password: user.password
-                        })
-                        ctx.helper.renderSuccess(ctx, {
-                            message: ctx.__("label_resetpwd_sendEmail_success")
-                        });
-                    }
+                        }
+                    }, "post");
+
+                    ctx.helper.renderSuccess(ctx, {
+                        message: ctx.__("label_resetpwd_sendEmail_success")
+                    });
+
                 } else {
                     ctx.helper.renderFail(ctx, {
                         message: ctx.__("label_resetpwd_noemail")
@@ -1034,18 +1347,15 @@ let RegUserController = {
         if (keyArr && validator.isEmail(keyArr[1])) {
 
             try {
-                const {
-                    ctx,
-                    service
-                } = this;
+
                 let defaultTemp = await ctx.service.contentTemplate.item(ctx, {
                     query: {
                         'using': true
                     },
                     populate: ['items']
                 });
-                let noticeTempPath = app.config.temp_view_forder + defaultTemp.alias + '/users/userNotice.html';
-                let reSetPwdTempPath = app.config.temp_view_forder + defaultTemp.alias + '/users/userResetPsd.html';
+                let noticeTempPath = '/' + defaultTemp.alias + '/users/userNotice.html';
+                let reSetPwdTempPath = '/' + defaultTemp.alias + '/users/userResetPsd.html';
 
                 let user = await ctx.service.user.item(ctx, {
                     query: {
@@ -1061,30 +1371,28 @@ let RegUserController = {
                         //  校验链接是否过期
                         let now = new Date().getTime();
                         let oneDay = 1000 * 60 * 60 * 24;
-                        // let localKeys = await siteFunc.getSiteLocalKeys(ctx.session.locale, res);
                         if (!user.retrieve_time || now - user.retrieve_time > oneDay) {
                             let renderData = {
                                 infoType: "warning",
                                 infoContent: ctx.__("label_resetpwd_link_timeout"),
                                 staticforder: defaultTemp.alias,
-                                // lk: localKeys.renderKeys
+                                staticRootPath: app.config.static.prefix,
                             }
-                            ctx.render(noticeTempPath, renderData);
+                            await ctx.render(noticeTempPath, renderData);
                         } else {
                             let renderData = {
                                 tokenId,
                                 staticforder: defaultTemp.alias,
-                                // lk: localKeys.renderKeys
+                                staticRootPath: app.config.static.prefix,
                             };
-                            ctx.render(reSetPwdTempPath, renderData);
+                            await ctx.render(reSetPwdTempPath, renderData);
                         }
                     } else {
-                        // let localKeys = await siteFunc.getSiteLocalKeys(ctx.session.locale, res);
-                        ctx.render(noticeTempPath, {
+                        await ctx.render(noticeTempPath, {
                             infoType: "warning",
                             infoContent: ctx.__("label_resetpwd_error_message"),
                             staticforder: defaultTemp.alias,
-                            // lk: localKeys.renderKeys
+                            staticRootPath: app.config.static.prefix,
                         });
                     }
                 } else {
@@ -1104,7 +1412,28 @@ let RegUserController = {
         }
     },
 
-    // 根据手机验证码找回密码
+    /**
+     * @api {post} /api/user/resetPassword 忘记密码找回
+     * @apiDescription 忘记密码找回
+     * @apiName resetPassword
+     * @apiGroup User
+     * @apiParam {string} phoneNum 手机号（eq:15220064294）
+     * @apiParam {string} countryCode 国家代码（eq: 86）
+     * @apiParam {string} messageCode 手机验证码(eq: 123456)
+     * @apiParam {string} email 邮箱(eq: xx@qq.com)
+     * @apiParam {string} type 找回方式(1:通过手机号找回，2:通过邮箱找回)
+     * @apiParam {string} password 密码
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     * {
+     *     "status": 200,
+     *     "message": "操作成功！",
+     *     "server_time": 1544536543533,
+     *     "data": {}
+     * }
+     * @apiSampleRequest http://localhost:8080/api/user/resetPassword
+     * @apiVersion 1.0.0
+     */
     async resetMyPassword(ctx, app) {
 
         try {
@@ -1137,7 +1466,7 @@ let RegUserController = {
             }
 
             let endStr = type == '1' ? (fields.countryCode + fields.phoneNum) : fields.email;
-            let currentCode = await getCacheValueByKey(app.config.session_secret + '_sendMessage_resetPassword_' + endStr);
+            let currentCode = await app.cache.get(app.config.session_secret + '_sendMessage_resetPassword_' + endStr);
 
             if (!validator.isNumeric((messageCode).toString()) || (messageCode).length != 6 || currentCode != fields.messageCode) {
                 errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_imageCode")])
@@ -1184,7 +1513,7 @@ let RegUserController = {
             if (!_.isEmpty(targetUser)) {
 
                 await ctx.service.user.update(ctx, targetUser._id, {
-                    password: ctx.helper.encrypt(fields.password, app.config.encrypt_key)
+                    password: fields.password
                 })
 
                 // 重置验证码
@@ -1210,8 +1539,6 @@ let RegUserController = {
     // web 端找回密码
     async updateNewPsd(ctx, app) {
 
-
-
         let fields = ctx.request.body || {};
         let errMsg = '';
         if (!fields.tokenId) {
@@ -1232,10 +1559,6 @@ let RegUserController = {
             var keyArr = ctx.helper.getKeyArrByTokenId(fields.tokenId);
             if (keyArr && validator.isEmail(keyArr[1])) {
                 try {
-                    const {
-                        ctx,
-                        service
-                    } = this;
 
                     let user = await ctx.service.user.item(ctx, {
                         query: {
@@ -1245,13 +1568,14 @@ let RegUserController = {
                     })
                     if (!_.isEmpty(user) && user._id) {
                         if (user.password == keyArr[0] && keyArr[2] == app.config.session_secret) {
-                            let currentPwd = ctx.helper.encrypt(fields.password, app.config.encrypt_key);
 
                             await ctx.service.user.update(ctx, user._id, {
-                                password: currentPwd,
+                                password: fields.password,
                                 retrieve_time: ''
                             })
-                            ctx.helper.renderSuccess(ctx);
+                            ctx.helper.renderSuccess(ctx, {
+                                message: ctx.__('restful_api_response_success', [ctx.__('lc_basic_set_password')])
+                            });
                         } else {
                             throw new Error(ctx.__('validate_error_params'));
                         }
@@ -1272,7 +1596,25 @@ let RegUserController = {
 
     },
 
-    // app 端修改密码
+    /**
+     * @api {post} /api/user/modifyMyPsd 修改密码
+     * @apiDescription 修改密码
+     * @apiName modifyMyPsd
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} oldPassword 原密码
+     * @apiParam {string} password 新密码
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     * {
+     *     "status": 200,
+     *     "message": "密码修改成功！",
+     *     "server_time": 1544536543533,
+     *     "data": {}
+     * }
+     * @apiSampleRequest http://localhost:8080/api/user/modifyMyPsd
+     * @apiVersion 1.0.0
+     */
     async modifyMyPsd(ctx, app) {
 
         try {
@@ -1296,15 +1638,19 @@ let RegUserController = {
 
             let targetUser = await ctx.service.user.item(ctx, {
                 query: {
-                    _id: userInfo._id,
-                    password: ctx.helper.encrypt(fields.oldPassword, app.config.encrypt_key)
-                }
+                    _id: userInfo._id
+                },
+                files: '_id password'
             })
 
             if (!_.isEmpty(targetUser)) {
 
+                if (fields.oldPassword != ctx.helper.decrypt(targetUser.password, app.config.encrypt_key)) {
+                    throw new Error(ctx.__('label_resetpwd_error_message'));
+                }
+
                 await ctx.service.user.update(ctx, userInfo._id, {
-                    password: ctx.helper.encrypt(fields.password, app.config.encrypt_key)
+                    password: fields.password
                 });
 
                 ctx.helper.renderSuccess(ctx, {
@@ -1323,56 +1669,27 @@ let RegUserController = {
 
     },
 
-    async postEmailToAdminUser(ctx, app) {
-
-        try {
-
-            let fields = ctx.request.body || {};
-            let errMsg = "";
-            if (fields.name && !validator.isLength(fields.name, 2, 16)) {
-                errMsg = ctx.__("validate_rangelength", [ctx.__("label_name"), 2, 16]);
-            }
-            if (fields.phoneNum && !validatorUtil.checkPhoneNum(fields.phoneNum)) {
-                errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_phoneNum")]);
-            }
-            if (!validatorUtil.checkEmail(fields.email)) {
-                errMsg = ctx.__("validate_inputCorrect", [ctx.__("label_user_email")]);
-            }
-            if (fields.comments && !validator.isLength(fields.comments, 5, 1000)) {
-                errMsg = ctx.__("validate_rangelength", [ctx.__("label_comments"), 5, 100]);
-            }
-            if (errMsg) {
-                throw new Error(errMsg);
-            } else {
-                const systemConfigs = await ctx.service.systemConfig.find({
-                    isPaging: '0'
-                });
-                ctx.helper.sendEmail(systemConfigs[0], emailTypeKey.email_notice_admin_byContactUs, {
-                    email: fields.email,
-                    name: fields.name,
-                    phoneNum: fields.phoneNum,
-                    comments: xss(fields.comments)
-                })
-                // 给用户发邮件
-                ctx.helper.sendEmail(systemConfigs[0], emailTypeKey.email_notice_user_byContactUs, {
-                    email: fields.email,
-                    name: fields.name,
-                    phoneNum: fields.phoneNum,
-                    comments: xss(fields.comments)
-                })
-
-                ctx.helper.renderSuccess(ctx, {
-                    message: ctx.__("lc_sendEmail_user_success_notice")
-                });
-            }
-        } catch (err) {
-            ctx.helper.renderFail(ctx, {
-                message: err
-            });
-        }
-    },
-
-    // 关注标签
+    /**
+     * @api {get} /api/user/addTags 关注标签
+     * @apiDescription 关注标签（需要登录状态,后台会通过读取用户session获取用户ID）
+     * @apiName /user/addTags
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} tagId 标签id(eq:yNYHEw3-e)
+     * @apiParam {string} type 方式(1:关注 0:取消关注)
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *  "status": 200,
+     *  "message": "操作成功",
+     *  "server_time": 1542251075220,
+     *  "data": {
+     *    
+     *  }
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/addTags
+     * @apiVersion 1.0.0
+     */
     async addTags(ctx, app) {
 
         try {
@@ -1435,7 +1752,27 @@ let RegUserController = {
     },
 
 
-    // 关注
+    /**
+     * @api {get} /api/user/followCreator 关注/取消关注 创作者
+     * @apiDescription 关注/取消关注 创作者（需要登录状态,后台会通过读取用户session获取用户ID）
+     * @apiName /user/followCreator
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} followState in:关注 out:取消关注
+     * @apiParam {string} creatorId 创作者id(eq:yNYHEw3-e)
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *  "status": 200,
+     *  "message": "操作成功",
+     *  "server_time": 1542251075220,
+     *  "data": {
+     *    
+     *  }
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/followCreator
+     * @apiVersion 1.0.0
+     */
     async followCreator(ctx, app) {
 
         try {
@@ -1522,6 +1859,37 @@ let RegUserController = {
     },
 
 
+    /**
+     * @api {post} /api/user/sendVerificationCode 发送验证码
+     * @apiDescription 发送验证码
+     * @apiName sendVerificationCode
+     * @apiGroup User
+     * @apiParam {string} phoneNum 手机号(eq:15220064294)
+     * @apiParam {string} countryCode 国家代码（eq: 86）
+     * @apiParam {string} email  邮箱
+     * @apiParam {string} messageType 发送验证码类别（0、注册 1、登录，2、忘记资金密码找回, 3、忘记密码，4、身份验证, 5、管理员登录，6、游客绑定邮箱或手机号）
+     * @apiParam {string} sendType 发送验证码形式（1: 短信验证码  2:邮箱验证码）
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     * {
+     *     "status": 200,
+     *     "message": "send Code success",
+     *     "server_time": 1542382533904,
+     *     "data": {
+     *         "messageCode": "378047"
+     *     }
+     * }  
+     * @apiError {json} result
+     * @apiErrorExample {json} Error-Response:
+     *  {
+     *    data: {}
+     *    message: "验证码错误"
+     *    server_time: 1542082677922
+     *    status: 500
+     *  }
+     * @apiSampleRequest http://localhost:8080/api/user/sendVerificationCode
+     * @apiVersion 1.0.0
+     */
     async sendVerificationCode(ctx, app) {
 
         try {
@@ -1610,11 +1978,11 @@ let RegUserController = {
 
             let endStr = sendType == '1' ? (countryCode + phoneNum) : email;
             let currentKey = app.config.session_secret + cacheKey + endStr;
-            console.log(currentStr, '---currentKey---', currentKey)
-            cache.set(currentKey, currentStr, 1000 * 60 * 10); // 验证码缓存10分钟
+            // console.log(currentStr, '--currentKey--', currentKey)
+            ctx.helper.setMemoryCache(currentKey, currentStr, 1000 * 60 * 10); // 验证码缓存10分钟
 
             // 验证码加密
-            let renderCode = ctx.helper.encryptApp(app.config.encryptApp_key, app.config.encryptApp_vi, currentStr);
+            let renderCode = ctx.helper.encrypt(currentStr, app.config.encrypt_key);
             console.log('renderCode: ', renderCode);
 
             if (sendType == '1') {
@@ -1622,17 +1990,14 @@ let RegUserController = {
                 (process.env.NODE_ENV == 'production') && siteFunc.sendTellMessagesByPhoneNum(countryCode, phoneNum, currentStr.toString());
             } else if (sendType == '2') {
                 //发送通知邮件给用户
-                const systemConfigs = await ctx.service.systemConfig.find({
-                    isPaging: '0'
-                });
-                if (!_.isEmpty(systemConfigs)) {
-                    (process.env.NODE_ENV == 'production') && ctx.helper.sendEmail(systemConfigs[0], emailTypeKey.email_sendMessageCode, {
+                await ctx.helper.reqJsonData('mailTemplate/sendEmail', {
+                    tempkey: "8",
+                    info: {
                         email: email,
-                        renderCode: currentStr
-                    })
-                } else {
-                    throw new Error(ctx.__('validate_error_params'));
-                }
+                        msgCode: currentStr
+                    }
+                }, "post");
+
             } else {
                 throw new Error(ctx.__('validate_error_params'));
             }
@@ -1653,7 +2018,25 @@ let RegUserController = {
 
     },
 
-    // 点赞/取消赞
+    /**
+     * @api {get} /api/user/askContentThumbsUp 帖子点赞/取消点赞
+     * @apiDescription 帖子点赞/取消点赞，需要登录态
+     * @apiName /user/askContentThumbsUp
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} praiseState in:赞 out:取消赞
+     * @apiParam {string} contentId 帖子ID/评论ID/社群帖ID
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *    "status": 200,
+     *    "message": "操作成功！",
+     *    "server_time": 1543372263586,
+     *    "data": {}
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/askContentThumbsUp
+     * @apiVersion 1.0.0
+     */
     async askContentThumbsUp(ctx, app) {
 
         try {
@@ -1758,7 +2141,25 @@ let RegUserController = {
 
     },
 
-    // 收藏帖子
+    /**
+     * @api {get} /api/user/favoriteContent 收藏/取消收藏帖子
+     * @apiDescription 收藏/取消收藏帖子，需要登录态
+     * @apiName /user/favoriteContent
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} favoriteState in:收藏 out:取消收藏
+     * @apiParam {string} contentId 帖子ID
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *    "status": 200,
+     *    "message": "操作成功！",
+     *    "server_time": 1543372263586,
+     *    "data": {}
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/favoriteContent
+     * @apiVersion 1.0.0
+     */
     async favoriteContent(ctx, app) {
 
         try {
@@ -1822,7 +2223,25 @@ let RegUserController = {
         }
     },
 
-    // 帖子踩
+    /**
+     * @api {get} /api/user/despiseContent 踩/取消踩 帖子
+     * @apiDescription 踩/取消踩帖子，需要登录态
+     * @apiName /user/despiseContent
+     * @apiGroup User
+     * @apiParam {string} token 登录时返回的参数鉴权
+     * @apiParam {string} despiseState in:踩 out:取消踩
+     * @apiParam {string} contentId 帖子ID/评论ID
+     * @apiSuccess {json} result
+     * @apiSuccessExample {json} Success-Response:
+     *{
+     *    "status": 200,
+     *    "message": "操作成功！",
+     *    "server_time": 1543372263586,
+     *    "data": {}
+     *}
+     * @apiSampleRequest http://localhost:8080/api/user/favoriteContent
+     * @apiVersion 1.0.0
+     */
     async despiseContent(ctx, app) {
 
         try {
@@ -1855,7 +2274,6 @@ let RegUserController = {
                 throw new Error(ctx.__("validate_error_params"));
             }
 
-            // console.log('--userInfo-1---',ctx.session.user);
             let oldDespise = userInfo.despises || [];
             if (targetMediaType == '1') {
                 oldDespise = userInfo.despiseMessage || [];
@@ -1899,9 +2317,6 @@ let RegUserController = {
             });
         }
     },
-
-
-
 
 }
 
