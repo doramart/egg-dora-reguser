@@ -17,7 +17,7 @@ exports.doraRegUser = {
     isindex: 0, // 是否需要前台访问，1：需要，0：不需要,入口地址:'/ext/devteam/index/index'
     version: pkgInfo.version, // 版本号
     iconName: 'icon_people_fill', // 主菜单图标名称
-    adminUrl: 'https://cdn.html-js.cn/cms/plugins/static/admin/regUser/js/app.js',
+    adminUrl: '/regUser/js/app.js',
     adminApi: [{
         url: 'regUser/getList',
         method: 'get',
@@ -152,11 +152,6 @@ exports.doraRegUser = {
         controllerName: 'updateNewPsd',
         details: '设置新密码',
     }, {
-        url: 'user/postEmailToAdminUser',
-        method: 'post',
-        controllerName: 'postEmailToAdminUser',
-        details: '给管理员发邮件',
-    }, {
         url: 'user/reset_pass',
         method: 'get',
         controllerName: 'reSetPass',
@@ -165,13 +160,12 @@ exports.doraRegUser = {
 
     initData: '', // 初始化数据脚本
     pluginsConfig: ` 
-    exports.doraRegUser = {\n
-        enable: true,\n
-        \n
+    module.exports = {\n
+        enable: true,\n        package: 'egg-dora-reguser',
     };\n
     `, // 插入到 plugins.js 中的配置
     defaultConfig: `
-    regUserRouter:{\n
+    module.exports = {\n
         match: [ctx => ctx.path.startsWith('/manage/regUser'), ctx => ctx.path.startsWith('/api/user')],\n
     },\n
     `, // 插入到 config.default.js 中的配置

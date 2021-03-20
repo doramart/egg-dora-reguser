@@ -8,17 +8,16 @@ const regUserRule = (ctx) => {
             required: true,
             min: 2,
             max: 30,
-            message: cxt.__("validate_error_field", [cxt.__("label_user_userName")])
+            message: ctx.__("validate_error_field", [ctx.__("label_user_userName")])
         },
         email: {
             type: "email",
             required: true,
-            message: cxt.__("validate_inputCorrect", [cxt.__("label_user_email")])
+            message: ctx.__("validate_inputCorrect", [ctx.__("label_user_email")])
         },
         phoneNum: {
             type: "string",
             required: true,
-            // len: 11,
             message: "invalid phoneNum"
         },
     }
@@ -80,13 +79,11 @@ let RegUserController = {
 
             let fields = ctx.request.body || {};
 
-            ctx.validate(userRule.form(ctx), {
+            ctx.validate(regUserRule(ctx), {
                 userName: fields.userName,
                 email: fields.email,
                 phoneNum: fields.phoneNum,
             });
-
-
 
             const userObj = {};
 
@@ -95,6 +92,9 @@ let RegUserController = {
             }
             if (fields.userName) {
                 userObj.userName = fields.userName;
+            }
+            if (fields.phoneNum) {
+                userObj.phoneNum = fields.phoneNum;
             }
             if (fields.name) {
                 userObj.name = fields.name;
@@ -148,7 +148,7 @@ let RegUserController = {
                 userObj.experience = xss(fields.experience);
             }
             if (fields.password) {
-                userObj.password = ctx.helper.encrypt(fields.password, app.config.encrypt_key);
+                userObj.password = fields.password;
             }
 
             // console.log('--userObj--', userObj)
@@ -182,7 +182,7 @@ let RegUserController = {
                 message: err
             });
         }
-    }
+    },
 
 }
 
